@@ -83,7 +83,7 @@ export default function LoginPage() {
                   Sign in to BookMe
                 </h1>
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                  Enter your email and we'll send a magic link. No password required.
+                  Enter your email and we&apos;ll send a magic link. No password required.
                 </p>
               </div>
 
