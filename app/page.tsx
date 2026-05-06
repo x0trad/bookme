@@ -60,13 +60,13 @@ const skills = [
   "Trading", "Languages", "Design", "Writing", "Mentoring",
 ];
 
-const CREAM = "#f7f3ed";
-const CREAM_DARK = "#ede8df";
-const BORDER = "#ddd5c8";
-const INK = "#1a1108";
-const INK_MUTED = "#6b5d4e";
-const WARM_MID = "#9b8b7a";
-const ACCENT_WARM = "#7c5c2e";
+const CREAM = "#f8f7ff";
+const CREAM_DARK = "#f1f0f8";
+const BORDER = "#e4e2f0";
+const INK = "#0f0e17";
+const INK_MUTED = "#6b6880";
+const WARM_MID = "#9391a8";
+const ACCENT_WARM = "#7c3aed";
 
 export default function LandingPage() {
   return (
@@ -77,8 +77,8 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 62 }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, fontSize: 16, color: INK }}>
-            <span style={{ width: 28, height: 28, borderRadius: 8, background: INK, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Zap size={13} style={{ color: CREAM }} />
+            <span style={{ width: 28, height: 28, borderRadius: 8, background: ACCENT_WARM, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Zap size={13} style={{ color: "#fff" }} />
             </span>
             BookMe
           </div>
@@ -94,7 +94,7 @@ export default function LandingPage() {
             <Link
               href="/login"
               style={{
-                background: INK, color: CREAM,
+                background: ACCENT_WARM, color: "#fff",
                 borderRadius: 999, padding: "9px 20px",
                 fontWeight: 700, fontSize: 14,
                 textDecoration: "none",
@@ -151,7 +151,7 @@ export default function LandingPage() {
             <Link
               href="/login"
               style={{
-                background: INK, color: CREAM,
+                background: ACCENT_WARM, color: "#fff",
                 borderRadius: 999, padding: "14px 30px",
                 fontWeight: 700, fontSize: 15,
                 textDecoration: "none",
@@ -261,7 +261,7 @@ export default function LandingPage() {
                 <div key={s.n} style={{ display: "flex", gap: 22 }}>
                   <div style={{
                     flexShrink: 0, width: 46, height: 46, borderRadius: 14,
-                    background: INK, color: CREAM,
+                    background: ACCENT_WARM, color: "#fff",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontWeight: 800, fontSize: 12, letterSpacing: "0.03em",
                   }}>
@@ -297,7 +297,7 @@ export default function LandingPage() {
             href="/login"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              background: INK, color: CREAM,
+              background: ACCENT_WARM, color: "#fff",
               borderRadius: 999, padding: "16px 34px",
               fontWeight: 700, fontSize: 15, textDecoration: "none",
             }}
