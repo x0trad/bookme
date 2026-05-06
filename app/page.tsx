@@ -108,85 +108,160 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ── */}
-      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "88px 28px 72px" }}>
-        <div style={{ maxWidth: 700 }}>
+      <section style={{ maxWidth: 1120, margin: "0 auto", padding: "56px 28px 48px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 56, flexWrap: "wrap" }}>
 
-          {/* Label */}
-          <p style={{
-            fontSize: 11, fontWeight: 700, textTransform: "uppercase",
-            letterSpacing: "0.12em", color: WARM_MID, marginBottom: 28,
+          {/* Left: copy */}
+          <div style={{ flex: "1 1 340px", minWidth: 0 }}>
+
+            {/* Label */}
+            <p style={{
+              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: "0.12em", color: WARM_MID, marginBottom: 18,
+            }}>
+              For anyone with a skill to share
+            </p>
+
+            {/* Headline — 30% smaller */}
+            <h1 style={{
+              fontFamily: "Georgia, 'Palatino Linotype', serif",
+              fontSize: "clamp(1.8rem, 4.2vw, 3.3rem)",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              color: INK,
+              letterSpacing: "-0.025em",
+              marginBottom: 20,
+            }}>
+              You&apos;re good at something.
+              <br />
+              <span style={{ color: ACCENT_WARM }}>Someone out there</span>
+              <br />
+              <span style={{ color: ACCENT_WARM }}>needs exactly that.</span>
+            </h1>
+
+            {/* Body */}
+            <p style={{
+              fontSize: "1rem", lineHeight: 1.7,
+              color: INK_MUTED, maxWidth: 460, marginBottom: 32,
+            }}>
+              Not everyone wants to build a company. Some people just want to
+              share what they know, on their own time, with people who genuinely
+              want to learn. BookMe makes that ridiculously simple.
+            </p>
+
+            {/* CTAs */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 32 }}>
+              <Link
+                href="/login"
+                style={{
+                  background: ACCENT_WARM, color: "#fff",
+                  borderRadius: 999, padding: "13px 26px",
+                  fontWeight: 700, fontSize: 14,
+                  textDecoration: "none",
+                  display: "inline-flex", alignItems: "center", gap: 7,
+                }}
+              >
+                Start sharing what you know <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/u/demo"
+                style={{
+                  background: "transparent", color: INK,
+                  border: `1.5px solid ${BORDER}`,
+                  borderRadius: 999, padding: "13px 26px",
+                  fontWeight: 600, fontSize: 14,
+                  textDecoration: "none",
+                }}
+              >
+                See a demo profile
+              </Link>
+            </div>
+
+            {/* Social proof */}
+            <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+              {[
+                "Free for solo providers",
+                "Clients book in under a minute",
+                "Works on any device",
+              ].map((s) => (
+                <span key={s} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: WARM_MID }}>
+                  <CheckCircle2 size={12} style={{ color: ACCENT_WARM }} />
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: booking UI mockup */}
+          <div style={{
+            flex: "0 0 340px", borderRadius: 24,
+            background: "#fff", border: `1px solid ${BORDER}`,
+            boxShadow: "0 8px 40px rgba(124,58,237,0.10)",
+            overflow: "hidden",
           }}>
-            For anyone with a skill to share
-          </p>
+            {/* Profile header */}
+            <div style={{ background: ACCENT_WARM, padding: "28px 24px 20px", textAlign: "center" }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%",
+                background: "rgba(255,255,255,0.25)",
+                margin: "0 auto 12px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26,
+              }}>🎸</div>
+              <p style={{ color: "#fff", fontWeight: 700, fontSize: 16, margin: 0 }}>Alex Rivera</p>
+              <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 4 }}>Guitar · Music Theory · Songwriting</p>
+            </div>
 
-          {/* Headline */}
-          <h1 style={{
-            fontFamily: "Georgia, 'Palatino Linotype', serif",
-            fontSize: "clamp(2.6rem, 6vw, 4.75rem)",
-            fontWeight: 700,
-            lineHeight: 1.07,
-            color: INK,
-            letterSpacing: "-0.025em",
-            marginBottom: 28,
-          }}>
-            You&apos;re good at something.
-            <br />
-            <span style={{ color: ACCENT_WARM }}>Someone out there</span>
-            <br />
-            <span style={{ color: ACCENT_WARM }}>needs exactly that.</span>
-          </h1>
+            {/* Body */}
+            <div style={{ padding: "20px 24px 24px" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: WARM_MID, marginBottom: 10 }}>
+                Pick a slot
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+                {["9:00 AM", "11:00 AM", "2:00 PM", "3:30 PM", "5:00 PM", "6:30 PM"].map((t, i) => (
+                  <div key={t} style={{
+                    padding: "8px 4px", borderRadius: 10, textAlign: "center",
+                    fontSize: 12, fontWeight: 600,
+                    background: i === 2 ? ACCENT_WARM : CREAM_DARK,
+                    color: i === 2 ? "#fff" : INK,
+                    border: `1.5px solid ${i === 2 ? ACCENT_WARM : BORDER}`,
+                    cursor: "pointer",
+                  }}>{t}</div>
+                ))}
+              </div>
 
-          {/* Body */}
-          <p style={{
-            fontSize: "1.1rem", lineHeight: 1.72,
-            color: INK_MUTED, maxWidth: 500, marginBottom: 44,
-          }}>
-            Not everyone wants to build a company. Some people just want to
-            share what they know, on their own time, with people who genuinely
-            want to learn. BookMe makes that ridiculously simple.
-          </p>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: WARM_MID, marginBottom: 10 }}>
+                Session length
+              </p>
+              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                {["60 min · $40", "90 min · $55"].map((l, i) => (
+                  <div key={l} style={{
+                    flex: 1, padding: "8px 6px", borderRadius: 10, textAlign: "center",
+                    fontSize: 12, fontWeight: 600,
+                    background: i === 0 ? ACCENT_WARM : CREAM_DARK,
+                    color: i === 0 ? "#fff" : INK,
+                    border: `1.5px solid ${i === 0 ? ACCENT_WARM : BORDER}`,
+                  }}>{l}</div>
+                ))}
+              </div>
 
-          {/* CTAs */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 52 }}>
-            <Link
-              href="/login"
-              style={{
+              <div style={{
+                width: "100%", padding: "12px 0", borderRadius: 12,
                 background: ACCENT_WARM, color: "#fff",
-                borderRadius: 999, padding: "14px 30px",
-                fontWeight: 700, fontSize: 15,
-                textDecoration: "none",
-                display: "inline-flex", alignItems: "center", gap: 8,
-              }}
-            >
-              Start sharing what you know <ArrowRight size={15} />
-            </Link>
-            <Link
-              href="/u/demo"
-              style={{
-                background: "transparent", color: INK,
-                border: `1.5px solid ${BORDER}`,
-                borderRadius: 999, padding: "14px 30px",
-                fontWeight: 600, fontSize: 15,
-                textDecoration: "none",
-              }}
-            >
-              See a demo profile
-            </Link>
+                fontWeight: 700, fontSize: 14, textAlign: "center",
+              }}>
+                Book for 2:00 PM →
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 14 }}>
+                {[1,2,3,4,5].map(i => (
+                  <span key={i} style={{ color: "#f59e0b", fontSize: 13 }}>★</span>
+                ))}
+                <span style={{ fontSize: 12, color: WARM_MID, marginLeft: 4 }}>4.9 · 38 sessions</span>
+              </div>
+            </div>
           </div>
 
-          {/* Social proof */}
-          <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-            {[
-              "Free for solo providers",
-              "Clients book in under a minute",
-              "Works on any device",
-            ].map((s) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: WARM_MID }}>
-                <CheckCircle2 size={13} style={{ color: ACCENT_WARM }} />
-                {s}
-              </span>
-            ))}
-          </div>
         </div>
       </section>
 
