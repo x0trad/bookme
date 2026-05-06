@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // ─── Profile ─────────────────────────────────────────────────
 
@@ -74,10 +75,19 @@ export async function deleteService(serviceId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  // Ownership check: only delete if this service belongs to the current user's profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+  if (!profile) return { error: "Profile not found" };
+
   const { error } = await supabase
     .from("service_offerings")
     .delete()
-    .eq("id", serviceId);
+    .eq("id", serviceId)
+    .eq("freelancer_id", profile.id);
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard");
@@ -118,10 +128,19 @@ export async function updateBookingStatus(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  // Ownership check: only update bookings that belong to the current user's profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+  if (!profile) return { error: "Profile not found" };
+
   const { error } = await supabase
     .from("booking_requests")
     .update({ status })
-    .eq("id", bookingId);
+    .eq("id", bookingId)
+    .eq("freelancer_id", profile.id);
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard");
@@ -133,5 +152,5 @@ export async function updateBookingStatus(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  revalidatePath("/");
+  redirect("/login");
 }

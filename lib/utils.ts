@@ -4,15 +4,27 @@ export function getUpcomingDates(
   weeksAhead = 4
 ): Date[] {
   const dates: Date[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const currentHour = now.getHours();
 
-  const availableDays = [...new Set(availabilitySlots.map((s) => s.day_of_week))];
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < weeksAhead * 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    if (availableDays.includes(d.getDay())) {
+    const dayOfWeek = d.getDay();
+
+    // Find if any slot for this day still has hours remaining
+    const hasRemainingSlots = availabilitySlots
+      .filter((s) => s.day_of_week === dayOfWeek)
+      .some((s) => {
+        if (i > 0) return true; // future days always count
+        const [endH] = s.end_time.split(":").map(Number);
+        return currentHour < endH - 1; // at least 1h remaining today
+      });
+
+    if (hasRemainingSlots) {
       dates.push(d);
     }
   }
