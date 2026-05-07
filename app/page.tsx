@@ -234,7 +234,7 @@ export default function LandingPage() {
                 Session length
               </p>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                {["60 min · $40", "90 min · $55"].map((l, i) => (
+                {["60 min · RM40", "90 min · RM55"].map((l, i) => (
                   <div key={l} style={{
                     flex: 1, padding: "8px 6px", borderRadius: 10, textAlign: "center",
                     fontSize: 12, fontWeight: 600,
