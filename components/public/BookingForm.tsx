@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import { ServiceOffering } from "@/types";
 import { submitBookingRequest } from "@/app/u/[username]/actions";
 import { formatDateLabel, formatTime } from "@/lib/utils";
-import { CheckCircle2, Calendar, Clock, DollarSign, X, ArrowRight } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, X, ArrowRight } from "lucide-react";
 
 interface Props {
   freelancerId: string;
@@ -84,8 +84,8 @@ export function BookingForm({ freelancerId, service, date, startTime, durationHo
         style={{ background: "linear-gradient(135deg, var(--accent), #c084fc)" }}
       >
         <div>
-          <p className="text-xs font-bold text-white/70 uppercase tracking-wider">Booking Summary</p>
-          <p className="text-white font-black text-base">{formatDateLabel(date)}</p>
+          <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.75)" }}>Booking Summary</p>
+          <p className="font-black text-base" style={{ color: "#ffffff" }}>{formatDateLabel(date)}</p>
         </div>
         <button
           onClick={onCancel}
@@ -102,7 +102,7 @@ export function BookingForm({ freelancerId, service, date, startTime, durationHo
         <Pill icon={<Clock size={12} />} label={`${formatTime(startTime)} – ${formatTime(endTime)} (${durationHours}h)`} />
         {service && <Pill icon={<span className="text-[10px] font-bold">SVC</span>} label={service.title} />}
         {totalPrice !== null && (
-          <Pill icon={<DollarSign size={12} />} label={`$${totalPrice.toFixed(0)} total`} accent />
+          <Pill icon={<span className="text-[10px] font-bold">RM</span>} label={`RM${totalPrice.toFixed(0)} total`} accent />
         )}
       </div>
 
