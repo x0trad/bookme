@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { sendBookingApprovedEmail, sendBookingRejectedEmail } from "@/lib/email";
 
 // ─── Profile ─────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ export async function upsertProfile(formData: FormData) {
   }
 
   const { error } = await supabase.from("profiles").upsert(
-    { user_id: user.id, name, username, bio, avatar_url, skills },
+    { user_id: user.id, name, username, bio, avatar_url, skills, email: user.email },
     { onConflict: "user_id" }
   );
 
@@ -131,7 +132,7 @@ export async function updateBookingStatus(
   // Ownership check: only update bookings that belong to the current user's profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, name, username, email")
     .eq("user_id", user.id)
     .single();
   if (!profile) return { error: "Profile not found" };
@@ -143,6 +144,55 @@ export async function updateBookingStatus(
     .eq("freelancer_id", profile.id);
 
   if (error) return { error: error.message };
+
+  // Send email notification to client
+  try {
+    const { data: booking } = await supabase
+      .from("booking_requests")
+      .select("client_name, client_email, booking_date, start_time, duration_hours, service_id")
+      .eq("id", bookingId)
+      .single();
+
+    if (booking) {
+      let serviceTitle: string | null = null;
+      if (booking.service_id) {
+        const { data: svc } = await supabase
+          .from("service_offerings")
+          .select("title")
+          .eq("id", booking.service_id)
+          .single();
+        serviceTitle = svc?.title ?? null;
+      }
+
+      const freelancerName = (profile.name as string | null) ?? (profile.username as string) ?? "Your freelancer";
+      const freelancerUsername = profile.username as string;
+
+      if (status === "approved") {
+        await sendBookingApprovedEmail({
+          clientEmail: booking.client_email as string,
+          clientName: booking.client_name as string,
+          freelancerName,
+          freelancerUsername,
+          bookingDate: booking.booking_date as string,
+          startTime: booking.start_time as string,
+          durationHours: booking.duration_hours as number,
+          serviceTitle,
+        });
+      } else {
+        await sendBookingRejectedEmail({
+          clientEmail: booking.client_email as string,
+          clientName: booking.client_name as string,
+          freelancerName,
+          freelancerUsername,
+          bookingDate: booking.booking_date as string,
+          startTime: booking.start_time as string,
+        });
+      }
+    }
+  } catch {
+    // Email failure should not break the status update
+  }
+
   revalidatePath("/dashboard");
   return { success: true };
 }

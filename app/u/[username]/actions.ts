@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendNewBookingEmail } from "@/lib/email";
 
 export async function submitBookingRequest(data: {
   freelancerId: string;
@@ -48,6 +49,42 @@ export async function submitBookingRequest(data: {
   });
 
   if (error) return { error: error.message };
+
+  // Email the freelancer about the new request
+  try {
+    const { data: freelancerProfile } = await supabase
+      .from("profiles")
+      .select("name, username, email")
+      .eq("id", data.freelancerId)
+      .single();
+
+    let serviceTitle: string | null = null;
+    if (data.serviceId) {
+      const { data: svc } = await supabase
+        .from("service_offerings")
+        .select("title")
+        .eq("id", data.serviceId)
+        .single();
+      serviceTitle = svc?.title ?? null;
+    }
+
+    if (freelancerProfile?.email) {
+      await sendNewBookingEmail({
+        freelancerEmail: freelancerProfile.email as string,
+        freelancerName: (freelancerProfile.name as string | null) ?? (freelancerProfile.username as string) ?? "there",
+        clientName: data.clientName,
+        clientEmail: data.clientEmail,
+        clientMessage: data.clientMessage || null,
+        bookingDate: data.bookingDate,
+        startTime: data.startTime,
+        durationHours: data.durationHours,
+        serviceTitle,
+      });
+    }
+  } catch {
+    // Email failure should not break the booking
+  }
+
   revalidatePath("/u");
   return { success: true };
 }
