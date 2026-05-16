@@ -4,9 +4,12 @@ import { Profile, ServiceOffering, AvailabilitySlot } from "@/types";
 import { getUpcomingDates, generateHourlySlots, formatTime } from "@/lib/utils";
 import { Download, RefreshCw, Palette } from "lucide-react";
 
-// ─── Card: HORIZONTAL 800 × 460 (2× retina) ──────────────────────────────────
-const CW = 800, CH = 460, SCALE = 2;
+// ─── Card dimensions ──────────────────────────────────────────────────────────
+const CW_H = 800, CH_H = 460; // horizontal / availability card
+const CW_S = 600, CH_S = 600; // square / services card
+const SCALE = 2;
 
+type CardStyle = "availability" | "services";
 type Theme = "dark" | "light" | "brand";
 
 const THEMES: Record<Theme, {
@@ -113,7 +116,226 @@ export const BG_PRESETS = [
   { id: "custom",  label: "Custom",   c1: "custom",  c2: "custom"  },
 ] as const;
 
-// ─── DRAW ─────────────────────────────────────────────────────────────────────
+// ─── DRAW: Square service card ────────────────────────────────────────────────
+interface DrawServiceCardOptions {
+  profile: Profile;
+  services: ServiceOffering[];
+  theme: Theme;
+  bgOverride: { c1: string; c2: string } | null;
+  avgRating: number | null;
+  reviewCount: number;
+  appUrl: string;
+}
+
+async function drawServiceCard(canvas: HTMLCanvasElement, opts: DrawServiceCardOptions) {
+  const ctx = canvas.getContext("2d")!;
+  canvas.width  = CW_S * SCALE;
+  canvas.height = CH_S * SCALE;
+  ctx.scale(SCALE, SCALE);
+
+  const C   = THEMES[opts.theme];
+  const PAD = 32;
+  const CW  = CW_S, CH = CH_S;
+  const name     = opts.profile.name     ?? opts.profile.username ?? "Freelancer";
+  const username = opts.profile.username ?? "user";
+  const initial  = name[0].toUpperCase();
+  const bookingUrl = `${opts.appUrl}/u/${username}`;
+  const svcs = opts.services.slice(0, 4);
+
+  // ── Background ───────────────────────────────────────────────────────────────
+  const bg1 = opts.bgOverride ? opts.bgOverride.c1 : C.bg1;
+  const bg2 = opts.bgOverride ? opts.bgOverride.c2 : C.bg2;
+  const bgGrad = ctx.createLinearGradient(0, 0, CW, CH);
+  bgGrad.addColorStop(0, bg1);
+  bgGrad.addColorStop(1, bg2);
+  ctx.fillStyle = bgGrad;
+  rr(ctx, 0, 0, CW, CH, 28); ctx.fill();
+
+  const glow = ctx.createRadialGradient(CW * 0.85, 30, 0, CW * 0.85, 30, 260);
+  glow.addColorStop(0, "rgba(255,255,255,0.08)");
+  glow.addColorStop(1, "transparent");
+  ctx.fillStyle = glow;
+  rr(ctx, 0, 0, CW, CH, 28); ctx.fill();
+
+  // ── AVAILABLE badge ──────────────────────────────────────────────────────────
+  const badgeTxt = "AVAILABLE";
+  ctx.font = "bold 10.5px -apple-system,system-ui,sans-serif";
+  ctx.letterSpacing = "1.5px";
+  const badgeW = ctx.measureText(badgeTxt).width + 28;
+  ctx.letterSpacing = "0px";
+  const badgeH = 26, badgeX = CW - PAD - badgeW, badgeY = PAD;
+  ctx.fillStyle = C.badgeBg;
+  rr(ctx, badgeX, badgeY, badgeW, badgeH, 13); ctx.fill();
+  ctx.fillStyle = C.badgeText;
+  ctx.font = "bold 10.5px -apple-system,system-ui,sans-serif";
+  ctx.letterSpacing = "1.5px"; ctx.textAlign = "center";
+  ctx.fillText(badgeTxt, badgeX + badgeW / 2, badgeY + 17.5);
+  ctx.letterSpacing = "0px"; ctx.textAlign = "left";
+
+  // ── Avatar ───────────────────────────────────────────────────────────────────
+  const avSize = 64, avX = PAD, avY = PAD;
+  const avGrad = ctx.createLinearGradient(avX, avY, avX + avSize, avY + avSize);
+  avGrad.addColorStop(0, C.ctaBg1); avGrad.addColorStop(1, C.ctaBg2);
+  ctx.fillStyle = avGrad;
+  rr(ctx, avX, avY, avSize, avSize, 16); ctx.fill();
+
+  if (opts.profile.avatar_url) {
+    try {
+      const img = await loadImage(opts.profile.avatar_url);
+      ctx.save(); rr(ctx, avX, avY, avSize, avSize, 16); ctx.clip();
+      ctx.drawImage(img, avX, avY, avSize, avSize); ctx.restore();
+    } catch {
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = `bold 26px -apple-system,system-ui,sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(initial, avX + avSize / 2, avY + avSize / 2 + 9);
+      ctx.textAlign = "left";
+    }
+  } else {
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = `bold 26px -apple-system,system-ui,sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(initial, avX + avSize / 2, avY + avSize / 2 + 9);
+    ctx.textAlign = "left";
+  }
+
+  // ── Name + handle + stars ────────────────────────────────────────────────────
+  const txtX = avX + avSize + 14;
+  ctx.fillStyle = C.text;
+  ctx.font = `bold 20px -apple-system,system-ui,sans-serif`;
+  ctx.fillText(name.length > 22 ? name.slice(0, 21) + "…" : name, txtX, avY + 22);
+  ctx.fillStyle = C.muted;
+  ctx.font = `12px -apple-system,system-ui,sans-serif`;
+  ctx.fillText(`@${username}`, txtX, avY + 40);
+  const starY = avY + 56, starSize = 7.5;
+  const filledCount = Math.round(opts.avgRating ?? 0);
+  for (let i = 0; i < 5; i++)
+    drawStar(ctx, txtX + 8 + i * 18, starY, starSize, i < filledCount, C.accent, C.border);
+  if (opts.avgRating !== null) {
+    ctx.fillStyle = C.text;
+    ctx.font = `bold 11px -apple-system,system-ui,sans-serif`;
+    ctx.fillText(opts.avgRating.toFixed(1), txtX + 99, starY + 4);
+    ctx.fillStyle = C.muted;
+    ctx.font = `10px -apple-system,system-ui,sans-serif`;
+    ctx.fillText(`(${opts.reviewCount})`, txtX + 115, starY + 4);
+  } else {
+    ctx.fillStyle = C.muted;
+    ctx.font = `10px -apple-system,system-ui,sans-serif`;
+    ctx.fillText("No reviews yet", txtX + 99, starY + 4);
+  }
+
+  // ── Divider ──────────────────────────────────────────────────────────────────
+  const divY = avY + avSize + 18;
+  ctx.save(); ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.globalAlpha = 0.45;
+  ctx.beginPath(); ctx.moveTo(PAD, divY); ctx.lineTo(CW - PAD, divY); ctx.stroke();
+  ctx.restore();
+
+  // ── SERVICES label ────────────────────────────────────────────────────────────
+  let y = divY + 16;
+  label(ctx, "SERVICES", PAD, y, C.muted);
+  y += 14;
+
+  // ── Service rows ──────────────────────────────────────────────────────────────
+  const rowH   = svcs.length > 0
+    ? Math.min(72, Math.floor((CH - PAD - 60 - y) / Math.max(svcs.length, 1)))
+    : 72;
+  const rowGap = svcs.length <= 3 ? 10 : 8;
+
+  svcs.forEach((svc, i) => {
+    const rx = PAD, ry = y + i * (rowH + rowGap);
+    const rw = CW - PAD * 2, rh = rowH;
+
+    // Row background
+    ctx.fillStyle = C.pillBg;
+    ctx.strokeStyle = C.pillBorder;
+    ctx.lineWidth = 1;
+    rr(ctx, rx, ry, rw, rh, 14); ctx.fill(); ctx.stroke();
+
+    // Accent left strip
+    const stripW = 5;
+    const accentGrad = ctx.createLinearGradient(rx, ry, rx, ry + rh);
+    accentGrad.addColorStop(0, C.ctaBg1);
+    accentGrad.addColorStop(1, C.ctaBg2);
+    ctx.fillStyle = accentGrad;
+    ctx.save();
+    rr(ctx, rx, ry, rw, rh, 14); ctx.clip();
+    ctx.fillRect(rx, ry, stripW, rh);
+    ctx.restore();
+
+    const innerX = rx + stripW + 16;
+
+    // Price (large, colored)
+    ctx.fillStyle = C.accentText;
+    ctx.font = `bold 22px -apple-system,system-ui,sans-serif`;
+    const priceStr = `RM${svc.price}`;
+    ctx.fillText(priceStr, innerX, ry + rh / 2 + 1);
+    const priceW = ctx.measureText(priceStr).width;
+
+    // Vertical divider after price
+    const dvX = innerX + priceW + 14;
+    ctx.save(); ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(dvX, ry + rh * 0.22);
+    ctx.lineTo(dvX, ry + rh * 0.78);
+    ctx.stroke(); ctx.restore();
+
+    // Title + duration
+    const textAreaX = dvX + 14;
+    const maxW = rw - (textAreaX - rx) - 20;
+    ctx.font = `bold 14px -apple-system,system-ui,sans-serif`;
+    ctx.fillStyle = C.text;
+    const maxChars = Math.floor(maxW / 8);
+    const title = svc.title.length > maxChars ? svc.title.slice(0, maxChars - 1) + "…" : svc.title;
+    ctx.fillText(title, textAreaX, ry + rh / 2 - 5);
+
+    ctx.font = `11px -apple-system,system-ui,sans-serif`;
+    ctx.fillStyle = C.muted;
+    ctx.fillText(`${svc.duration_hours}h session`, textAreaX, ry + rh / 2 + 12);
+
+    // Arrow chevron (right edge)
+    ctx.fillStyle = C.muted;
+    ctx.font = `bold 16px -apple-system,system-ui,sans-serif`;
+    ctx.textAlign = "right";
+    ctx.globalAlpha = 0.5;
+    ctx.fillText("›", rx + rw - 16, ry + rh / 2 + 6);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "left";
+  });
+
+  y += svcs.length * (rowH + rowGap);
+
+  // ── CTA bar ───────────────────────────────────────────────────────────────────
+  const ctaH = 44;
+  const ctaGrad = ctx.createLinearGradient(PAD, 0, CW - PAD, 0);
+  ctaGrad.addColorStop(0, C.ctaBg1); ctaGrad.addColorStop(1, C.ctaBg2);
+  ctx.fillStyle = ctaGrad;
+  rr(ctx, PAD, CH - PAD - ctaH, CW - PAD * 2, ctaH, 12); ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.font = `bold 9.5px -apple-system,system-ui,sans-serif`;
+  ctx.letterSpacing = "1.5px";
+  ctx.fillText("BOOK NOW", PAD + 16, CH - PAD - ctaH + 17);
+  ctx.letterSpacing = "0px";
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold 14px -apple-system,system-ui,sans-serif`;
+  ctx.fillText(bookingUrl, PAD + 16, CH - PAD - ctaH + 34);
+
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.font = `bold 18px -apple-system,system-ui,sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("→", CW - PAD - 16, CH - PAD - ctaH + 30);
+  ctx.textAlign = "left";
+
+  // ── Footer ────────────────────────────────────────────────────────────────────
+  ctx.fillStyle = C.muted;
+  ctx.font = `10px -apple-system,system-ui,sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("Made with BookMe", CW - PAD, CH - 10);
+  ctx.textAlign = "left";
+}
+
+// ─── DRAW: Availability card ──────────────────────────────────────────────────
 interface DrawOptions {
   profile: Profile;
   selectedServices: ServiceOffering[];
@@ -128,12 +350,13 @@ interface DrawOptions {
 
 async function drawCard(canvas: HTMLCanvasElement, opts: DrawOptions) {
   const ctx = canvas.getContext("2d")!;
-  canvas.width = CW * SCALE;
-  canvas.height = CH * SCALE;
+  canvas.width = CW_H * SCALE;
+  canvas.height = CH_H * SCALE;
   ctx.scale(SCALE, SCALE);
 
   const C = THEMES[opts.theme];
   const PAD = 32;
+  const CW = CW_H, CH = CH_H;
   const name = opts.profile.name ?? opts.profile.username ?? "Freelancer";
   const username = opts.profile.username ?? "user";
   const initial = name[0].toUpperCase();
@@ -473,6 +696,7 @@ interface Props {
 
 export function ShareCardTab({ profile, services, availability, avgRating, reviewCount }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cardStyle, setCardStyle] = useState<CardStyle>("availability");
   const upcomingDates = getUpcomingDates(availability, 3);
 
   // Derive unique sorted time slots from availability
@@ -521,16 +745,23 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
     if (!canvas) return;
     setRendering(true);
     try {
-      await drawCard(canvas, {
-        profile, selectedServices, selectedDates,
-        selectedTimes: selectedTimesList,
-        theme, bgOverride, avgRating, reviewCount, appUrl,
-      });
+      if (cardStyle === "services") {
+        await drawServiceCard(canvas, {
+          profile, services: selectedServices,
+          theme, bgOverride, avgRating, reviewCount, appUrl,
+        });
+      } else {
+        await drawCard(canvas, {
+          profile, selectedServices, selectedDates,
+          selectedTimes: selectedTimesList,
+          theme, bgOverride, avgRating, reviewCount, appUrl,
+        });
+      }
     } finally {
       setRendering(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, theme, bgOverride, selectedServiceIds, selectedDateIdxs, selectedTimes, avgRating, reviewCount, appUrl]);
+  }, [profile, cardStyle, theme, bgOverride, selectedServiceIds, selectedDateIdxs, selectedTimes, avgRating, reviewCount, appUrl]);
 
   useEffect(() => { render(); }, [render]);
 
@@ -558,7 +789,7 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `bookme-card-${profile.username ?? "card"}.png`;
+      a.download = `bookme-${cardStyle}-${profile.username ?? "card"}.png`;
       a.click();
       URL.revokeObjectURL(url);
     }, "image/png");
@@ -573,8 +804,39 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
   return (
     <div className="flex flex-col gap-5">
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        Design a shareable card to post on Threads, Instagram, or anywhere. Pick your theme, services, and dates.
+        Design a shareable card to post on Threads, Instagram, or anywhere. Pick your style, theme, and content.
       </p>
+
+      {/* ── Card Style ── */}
+      <div>
+        <label className="text-xs font-black uppercase tracking-widest block mb-2" style={{ color: "var(--text-muted)" }}>
+          Card Style
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { id: "availability", label: "Availability", desc: "Landscape · dates & times" },
+            { id: "services",     label: "Services",     desc: "Square · price menu" },
+          ] as { id: CardStyle; label: string; desc: string }[]).map((s) => {
+            const on = cardStyle === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setCardStyle(s.id)}
+                className="flex flex-col gap-0.5 px-4 py-3 rounded-xl text-left transition-all"
+                style={{
+                  background: on ? "var(--accent-light)" : "var(--bg-muted)",
+                  border: `1.5px solid ${on ? "var(--accent)" : "var(--border)"}`,
+                }}
+              >
+                <span className="text-xs font-black" style={{ color: on ? "var(--accent)" : "var(--text)" }}>
+                  {s.label}
+                </span>
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{s.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── Theme ── */}
       <div>
@@ -724,7 +986,7 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
       )}
 
       {/* ── Dates ── */}
-      {upcomingDates.length > 0 && (
+      {cardStyle === "availability" && upcomingDates.length > 0 && (
         <div>
           <label className="text-xs font-black uppercase tracking-widest block mb-2" style={{ color: "var(--text-muted)" }}>
             Dates (max 4)
@@ -754,7 +1016,7 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
       )}
 
       {/* ── Time Slots ── */}
-      {availableTimes.length > 0 && (
+      {cardStyle === "availability" && availableTimes.length > 0 && (
         <div>
           <label className="text-xs font-black uppercase tracking-widest block mb-2" style={{ color: "var(--text-muted)" }}>
             Time slots shown per date (max 6)
@@ -809,9 +1071,9 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
             ref={canvasRef}
             style={{
               width: "100%",
-              maxWidth: CW,
+              maxWidth: cardStyle === "services" ? CW_S : CW_H,
               height: "auto",
-              aspectRatio: `${CW} / ${CH}`,
+              aspectRatio: cardStyle === "services" ? `${CW_S} / ${CH_S}` : `${CW_H} / ${CH_H}`,
               borderRadius: 14,
               boxShadow: "0 6px 32px rgba(0,0,0,0.3)",
               display: "block",
