@@ -7,9 +7,10 @@ import { Download, RefreshCw, Palette } from "lucide-react";
 // ─── Card dimensions ──────────────────────────────────────────────────────────
 const CW_H = 800, CH_H = 460; // horizontal / availability card
 const CW_S = 600, CH_S = 600; // square / services card
+const CW_B = 540, CH_B = 720; // bold / poster card (portrait)
 const SCALE = 2;
 
-type CardStyle = "availability" | "services";
+type CardStyle = "availability" | "services" | "bold";
 type Theme = "dark" | "light" | "brand";
 
 const THEMES: Record<Theme, {
@@ -115,6 +116,222 @@ export const BG_PRESETS = [
   { id: "aurora",  label: "Aurora",   c1: "#064e3b", c2: "#312e81" },
   { id: "custom",  label: "Custom",   c1: "custom",  c2: "custom"  },
 ] as const;
+
+// ─── DRAW: Bold / poster card (portrait 540×720) ─────────────────────────────
+interface DrawBoldCardOptions {
+  profile: Profile;
+  services: ServiceOffering[];
+  theme: Theme;
+  bgOverride: { c1: string; c2: string } | null;
+  avgRating: number | null;
+  reviewCount: number;
+  appUrl: string;
+}
+
+async function drawBoldCard(canvas: HTMLCanvasElement, opts: DrawBoldCardOptions) {
+  const ctx = canvas.getContext("2d")!;
+  canvas.width  = CW_B * SCALE;
+  canvas.height = CH_B * SCALE;
+  ctx.scale(SCALE, SCALE);
+
+  const C   = THEMES[opts.theme];
+  const CW  = CW_B, CH = CH_B;
+  const PAD = 28;
+  const name     = opts.profile.name     ?? opts.profile.username ?? "Freelancer";
+  const username = opts.profile.username ?? "user";
+  const initial  = name[0].toUpperCase();
+  const bookingUrl = `${opts.appUrl}/u/${username}`;
+  const svcs = opts.services.slice(0, 4);
+
+  // ── Background ───────────────────────────────────────────────────────────────
+  const bg1 = opts.bgOverride ? opts.bgOverride.c1 : C.bg1;
+  const bg2 = opts.bgOverride ? opts.bgOverride.c2 : C.bg2;
+  const bgGrad = ctx.createLinearGradient(0, 0, CW * 0.4, CH);
+  bgGrad.addColorStop(0, bg1);
+  bgGrad.addColorStop(1, bg2);
+  ctx.fillStyle = bgGrad;
+  rr(ctx, 0, 0, CW, CH, 28); ctx.fill();
+
+  // Diagonal noise overlay — subtle texture strip
+  const texGrad = ctx.createLinearGradient(0, 0, CW, 0);
+  texGrad.addColorStop(0, "rgba(255,255,255,0.00)");
+  texGrad.addColorStop(0.6, "rgba(255,255,255,0.04)");
+  texGrad.addColorStop(1, "rgba(255,255,255,0.00)");
+  ctx.fillStyle = texGrad;
+  rr(ctx, 0, 0, CW, CH, 28); ctx.fill();
+
+  // Bold accent bar — full-width top strip
+  const accentBarH = 6;
+  const barGrad = ctx.createLinearGradient(0, 0, CW, 0);
+  barGrad.addColorStop(0, C.ctaBg1);
+  barGrad.addColorStop(1, C.ctaBg2);
+  ctx.save();
+  rr(ctx, 0, 0, CW, CH, 28); ctx.clip();
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 0, CW, accentBarH);
+  ctx.restore();
+
+  let y = accentBarH + 24;
+
+  // ── Avatar row ───────────────────────────────────────────────────────────────
+  const avSize = 52;
+  const avX = PAD, avY = y;
+  const avGrad = ctx.createLinearGradient(avX, avY, avX + avSize, avY + avSize);
+  avGrad.addColorStop(0, C.ctaBg1); avGrad.addColorStop(1, C.ctaBg2);
+  ctx.fillStyle = avGrad;
+  rr(ctx, avX, avY, avSize, avSize, 14); ctx.fill();
+
+  if (opts.profile.avatar_url) {
+    try {
+      const img = await loadImage(opts.profile.avatar_url);
+      ctx.save(); rr(ctx, avX, avY, avSize, avSize, 14); ctx.clip();
+      ctx.drawImage(img, avX, avY, avSize, avSize); ctx.restore();
+    } catch {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = `bold 22px -apple-system,system-ui,sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(initial, avX + avSize / 2, avY + avSize / 2 + 8);
+      ctx.textAlign = "left";
+    }
+  } else {
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.font = `bold 22px -apple-system,system-ui,sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(initial, avX + avSize / 2, avY + avSize / 2 + 8);
+    ctx.textAlign = "left";
+  }
+
+  // AVAILABLE badge (right-aligned)
+  const badgeTxt = "AVAILABLE";
+  ctx.font = "bold 9px -apple-system,system-ui,sans-serif";
+  ctx.letterSpacing = "1.2px";
+  const badgeW = ctx.measureText(badgeTxt).width + 22;
+  ctx.letterSpacing = "0px";
+  const badgeH = 22, badgeX = CW - PAD - badgeW, badgeY = avY + (avSize - badgeH) / 2;
+  ctx.fillStyle = C.badgeBg;
+  rr(ctx, badgeX, badgeY, badgeW, badgeH, 11); ctx.fill();
+  ctx.fillStyle = C.badgeText;
+  ctx.font = "bold 9px -apple-system,system-ui,sans-serif";
+  ctx.letterSpacing = "1.2px"; ctx.textAlign = "center";
+  ctx.fillText(badgeTxt, badgeX + badgeW / 2, badgeY + 14.5);
+  ctx.letterSpacing = "0px"; ctx.textAlign = "left";
+
+  y = avY + avSize + 18;
+
+  // ── Large name ────────────────────────────────────────────────────────────────
+  ctx.fillStyle = C.text;
+  ctx.font = `900 38px -apple-system,system-ui,sans-serif`;
+  const displayName = name.length > 18 ? name.slice(0, 17) + "…" : name;
+  ctx.fillText(displayName, PAD, y);
+  y += 8;
+
+  // Handle + stars on same line
+  ctx.fillStyle = C.muted;
+  ctx.font = `13px -apple-system,system-ui,sans-serif`;
+  ctx.fillText(`@${username}`, PAD, y + 18);
+
+  // Stars (right-side of handle line)
+  const starX = PAD + ctx.measureText(`@${username}`).width + 16;
+  const starY2 = y + 12, starSize = 7;
+  const filled = Math.round(opts.avgRating ?? 0);
+  for (let i = 0; i < 5; i++)
+    drawStar(ctx, starX + 8 + i * 17, starY2, starSize, i < filled, C.accent, C.border);
+  if (opts.avgRating !== null) {
+    ctx.fillStyle = C.text;
+    ctx.font = `bold 11px -apple-system,system-ui,sans-serif`;
+    ctx.fillText(opts.avgRating.toFixed(1), starX + 92, starY2 + 4);
+  }
+  y += 32;
+
+  // ── Full-width divider ────────────────────────────────────────────────────────
+  ctx.save(); ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(CW - PAD, y); ctx.stroke();
+  ctx.restore();
+  y += 18;
+
+  // ── SERVICES label ────────────────────────────────────────────────────────────
+  label(ctx, "SERVICES", PAD, y, C.muted);
+  y += 16;
+
+  // ── Service rows — big price, compact ────────────────────────────────────────
+  const ctaH = 48;
+  const availH = CH - PAD - ctaH - y - 16;
+  const rowCount = Math.max(svcs.length, 1);
+  const rowGap = 8;
+  const rowH = Math.min(80, Math.floor((availH - rowGap * (rowCount - 1)) / rowCount));
+
+  svcs.forEach((svc, i) => {
+    const rx = PAD, ry = y + i * (rowH + rowGap);
+    const rw = CW - PAD * 2;
+
+    // Row bg
+    ctx.fillStyle = C.pillBg;
+    ctx.strokeStyle = C.pillBorder;
+    ctx.lineWidth = 1;
+    rr(ctx, rx, ry, rw, rowH, 14); ctx.fill(); ctx.stroke();
+
+    // Index number (left gutter, large muted)
+    ctx.fillStyle = C.muted;
+    ctx.font = `900 11px -apple-system,system-ui,sans-serif`;
+    ctx.textAlign = "center";
+    ctx.globalAlpha = 0.4;
+    ctx.fillText(`${i + 1}`, rx + 16, ry + rowH / 2 + 4);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "left";
+
+    // Service title — large and bold
+    const titleX = rx + 32;
+    ctx.fillStyle = C.text;
+    ctx.font = `800 ${rowH >= 70 ? 18 : 16}px -apple-system,system-ui,sans-serif`;
+    const maxTitleW = rw - 32 - 90;
+    const maxChars = Math.floor(maxTitleW / (rowH >= 70 ? 10.5 : 9.5));
+    const titleStr = svc.title.length > maxChars ? svc.title.slice(0, maxChars - 1) + "…" : svc.title;
+    ctx.fillText(titleStr, titleX, ry + rowH / 2 - (rowH >= 70 ? 5 : 3));
+
+    // Duration subtitle
+    ctx.fillStyle = C.muted;
+    ctx.font = `11px -apple-system,system-ui,sans-serif`;
+    ctx.fillText(`${svc.duration_hours}h session`, titleX, ry + rowH / 2 + 13);
+
+    // Price — large, right-aligned, colored
+    ctx.fillStyle = C.accentText;
+    ctx.font = `900 ${rowH >= 70 ? 28 : 24}px -apple-system,system-ui,sans-serif`;
+    ctx.textAlign = "right";
+    ctx.fillText(`RM${svc.price}`, rx + rw - 16, ry + rowH / 2 + (rowH >= 70 ? 10 : 8));
+    ctx.textAlign = "left";
+  });
+
+  y += rowCount * (rowH + rowGap) + 8;
+
+  // ── CTA bar ───────────────────────────────────────────────────────────────────
+  const ctaGrad = ctx.createLinearGradient(PAD, 0, CW - PAD, 0);
+  ctaGrad.addColorStop(0, C.ctaBg1); ctaGrad.addColorStop(1, C.ctaBg2);
+  ctx.fillStyle = ctaGrad;
+  rr(ctx, PAD, CH - PAD - ctaH, CW - PAD * 2, ctaH, 12); ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.font = `bold 9px -apple-system,system-ui,sans-serif`;
+  ctx.letterSpacing = "1.5px";
+  ctx.fillText("BOOK NOW", PAD + 16, CH - PAD - ctaH + 18);
+  ctx.letterSpacing = "0px";
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold 14px -apple-system,system-ui,sans-serif`;
+  ctx.fillText(bookingUrl, PAD + 16, CH - PAD - ctaH + 35);
+
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  ctx.font = `bold 18px -apple-system,system-ui,sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("→", CW - PAD - 14, CH - PAD - ctaH + 31);
+  ctx.textAlign = "left";
+
+  // Footer
+  ctx.fillStyle = C.muted;
+  ctx.font = `9px -apple-system,system-ui,sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("Made with BookMe", CW - PAD, CH - 10);
+  ctx.textAlign = "left";
+}
 
 // ─── DRAW: Square service card ────────────────────────────────────────────────
 interface DrawServiceCardOptions {
@@ -750,6 +967,11 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
           profile, services: selectedServices,
           theme, bgOverride, avgRating, reviewCount, appUrl,
         });
+      } else if (cardStyle === "bold") {
+        await drawBoldCard(canvas, {
+          profile, services: selectedServices,
+          theme, bgOverride, avgRating, reviewCount, appUrl,
+        });
       } else {
         await drawCard(canvas, {
           profile, selectedServices, selectedDates,
@@ -812,10 +1034,11 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
         <label className="text-xs font-black uppercase tracking-widest block mb-2" style={{ color: "var(--text-muted)" }}>
           Card Style
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {([
-            { id: "availability", label: "Availability", desc: "Landscape · dates & times" },
+            { id: "availability", label: "Availability", desc: "Landscape · dates" },
             { id: "services",     label: "Services",     desc: "Square · price menu" },
+            { id: "bold",         label: "Bold",         desc: "Portrait · big type" },
           ] as { id: CardStyle; label: string; desc: string }[]).map((s) => {
             const on = cardStyle === s.id;
             return (
@@ -1071,9 +1294,9 @@ export function ShareCardTab({ profile, services, availability, avgRating, revie
             ref={canvasRef}
             style={{
               width: "100%",
-              maxWidth: cardStyle === "services" ? CW_S : CW_H,
+              maxWidth: cardStyle === "services" ? CW_S : cardStyle === "bold" ? CW_B : CW_H,
               height: "auto",
-              aspectRatio: cardStyle === "services" ? `${CW_S} / ${CH_S}` : `${CW_H} / ${CH_H}`,
+              aspectRatio: cardStyle === "services" ? `${CW_S} / ${CH_S}` : cardStyle === "bold" ? `${CW_B} / ${CH_B}` : `${CW_H} / ${CH_H}`,
               borderRadius: 14,
               boxShadow: "0 6px 32px rgba(0,0,0,0.3)",
               display: "block",
