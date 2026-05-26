@@ -197,6 +197,34 @@ export async function updateBookingStatus(
   return { success: true };
 }
 
+// ─── Avatar Upload ────────────────────────────────────────────
+
+export async function uploadAvatar(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "No file provided" };
+
+  const path = `${user.id}.webp`;
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { error: upErr } = await supabase.storage
+    .from("avatars")
+    .upload(path, buffer, {
+      contentType: "image/webp",
+      upsert: true,
+      cacheControl: "3600",
+    });
+
+  if (upErr) return { error: upErr.message };
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return { url: `${data.publicUrl}?t=${Date.now()}` };
+}
+
 // ─── Sign Out ─────────────────────────────────────────────────
 
 export async function signOut() {

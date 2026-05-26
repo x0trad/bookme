@@ -1,11 +1,11 @@
 "use client";
 import { useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { uploadAvatar } from "@/app/dashboard/actions";
 import { Upload, X, Loader2 } from "lucide-react";
 
-const MAX_PX   = 400;   // max dimension after resize
-const QUALITY  = 0.85;  // WebP quality
-const MAX_MB   = 5;     // reject files over this size
+const MAX_PX  = 400;   // max dimension after resize
+const QUALITY = 0.85;  // WebP quality
+const MAX_MB  = 5;     // reject files over this size
 
 interface Props {
   userId: string;
@@ -26,8 +26,7 @@ function toWebP(file: File): Promise<Blob> {
       const canvas = document.createElement("canvas");
       canvas.width  = w;
       canvas.height = h;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, w, h);
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
       canvas.toBlob(
         (blob) => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")),
         "image/webp",
@@ -39,12 +38,12 @@ function toWebP(file: File): Promise<Blob> {
   });
 }
 
-export function AvatarUpload({ userId, currentUrl, onUploaded }: Props) {
-  const inputRef   = useRef<HTMLInputElement>(null);
-  const [preview,  setPreview]  = useState<string | null>(currentUrl);
+export function AvatarUpload({ userId: _userId, currentUrl, onUploaded }: Props) {
+  const inputRef    = useRef<HTMLInputElement>(null);
+  const [preview,   setPreview]   = useState<string | null>(currentUrl);
   const [uploading, setUploading] = useState(false);
-  const [error,    setError]    = useState("");
-  const [dragging, setDragging] = useState(false);
+  const [error,     setError]     = useState("");
+  const [dragging,  setDragging]  = useState(false);
 
   async function handleFile(file: File) {
     setError("");
@@ -53,26 +52,18 @@ export function AvatarUpload({ userId, currentUrl, onUploaded }: Props) {
 
     setUploading(true);
     try {
+      // Convert to WebP on the client
       const webpBlob = await toWebP(file);
-      const path     = `${userId}.webp`;
-      const supabase = createClient();
 
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, webpBlob, {
-          contentType: "image/webp",
-          upsert: true,
-          cacheControl: "3600",
-        });
+      // Send to server action which uses the server Supabase client (guaranteed auth)
+      const fd = new FormData();
+      fd.append("file", new File([webpBlob], "avatar.webp", { type: "image/webp" }));
 
-      if (upErr) throw new Error(upErr.message);
+      const result = await uploadAvatar(fd);
+      if (result.error) throw new Error(result.error);
 
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      // Bust cache with a timestamp so the browser re-fetches the new image
-      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-
-      setPreview(publicUrl);
-      onUploaded(publicUrl);
+      setPreview(result.url!);
+      onUploaded(result.url!);
     } catch (e) {
       setError((e as Error).message ?? "Upload failed.");
     } finally {
@@ -104,7 +95,7 @@ export function AvatarUpload({ userId, currentUrl, onUploaded }: Props) {
       </label>
 
       <div className="flex items-center gap-4">
-        {/* Avatar preview circle */}
+        {/* Avatar preview */}
         <div className="relative flex-shrink-0">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -122,7 +113,6 @@ export function AvatarUpload({ userId, currentUrl, onUploaded }: Props) {
               <span className="text-3xl font-black text-white select-none">?</span>
             </div>
           )}
-          {/* Clear button */}
           {preview && !uploading && (
             <button
               type="button"
