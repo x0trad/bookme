@@ -2,23 +2,29 @@
 import { useState, useTransition } from "react";
 import { Profile } from "@/types";
 import { upsertProfile } from "@/app/dashboard/actions";
-import { Save, User } from "lucide-react";
+import { AvatarUpload } from "./AvatarUpload";
+import { Save } from "lucide-react";
 
 export function ProfileTab({
   profile,
   userEmail,
+  userId,
 }: {
   profile: Profile | null;
   userEmail: string;
+  userId: string;
 }) {
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [error, setError]   = useState("");
+  const [saved, setSaved]   = useState(false);
   const [pending, startTransition] = useTransition();
+  const [avatarUrl, setAvatarUrl]  = useState<string>(profile?.avatar_url ?? "");
 
   function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     const fd = new FormData(e.currentTarget);
+    // Inject the controlled avatar URL (may differ from original)
+    fd.set("avatar_url", avatarUrl);
     startTransition(async () => {
       const res = await upsertProfile(fd);
       if (res?.error) { setError(res.error); return; }
@@ -30,24 +36,24 @@ export function ProfileTab({
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-4">
       <div className="card p-5 flex flex-col gap-4">
-        {/* Avatar preview */}
-        <div className="flex items-center gap-3">
-          {profile?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatar_url} alt="Avatar" className="w-14 h-14 rounded-2xl object-cover" />
-          ) : (
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,var(--accent),#c084fc)", color: "white" }}
-            >
-              <User size={24} />
-            </div>
-          )}
-          <div>
-            <p className="text-xs font-semibold" style={{ color: "var(--text)" }}>{userEmail}</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Signed in via magic link</p>
-          </div>
+
+        {/* Signed-in email */}
+        <div className="flex items-center gap-2 pb-1">
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ background: "var(--accent)" }}
+          />
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Signed in as <span className="font-semibold" style={{ color: "var(--text)" }}>{userEmail}</span>
+          </p>
         </div>
+
+        {/* Avatar upload */}
+        <AvatarUpload
+          userId={userId}
+          currentUrl={avatarUrl || null}
+          onUploaded={setAvatarUrl}
+        />
 
         <div>
           <label className="text-xs font-semibold block mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
@@ -94,19 +100,6 @@ export function ProfileTab({
             defaultValue={profile?.bio ?? ""}
             placeholder="A sentence or two about what you do…"
             className="input-base resize-none h-20"
-          />
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold block mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-            Avatar URL
-          </label>
-          <input
-            name="avatar_url"
-            defaultValue={profile?.avatar_url ?? ""}
-            placeholder="https://example.com/photo.jpg"
-            className="input-base"
-            type="url"
           />
         </div>
 

@@ -177,7 +177,7 @@ export function DashboardClient({ user, profile, services, availability, request
             <AvailabilityTab availability={availability} profileId={profile?.id ?? null} />
           )}
           {tab === "profile" && (
-            <ProfileTab profile={profile} userEmail={user.email ?? ""} />
+            <ProfileTab profile={profile} userEmail={user.email ?? ""} userId={user.id} />
           )}
           {tab === "share" && profile && (
             <ShareCardTab
