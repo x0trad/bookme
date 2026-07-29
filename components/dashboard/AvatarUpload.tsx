@@ -108,7 +108,7 @@ export function AvatarUpload({ userId: _userId, currentUrl, onUploaded }: Props)
           ) : (
             <div
               className="w-20 h-20 rounded-2xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg,var(--accent),#c084fc)" }}
+              style={{ background: "var(--accent-gradient)" }}
             >
               <span className="text-3xl font-black text-white select-none">?</span>
             </div>

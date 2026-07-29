@@ -4,30 +4,56 @@
 
 @layer base {
   :root {
-    --bg:          #f8f7ff;
+    /* Surfaces */
+    --bg:          #fafafc;
     --bg-card:     #ffffff;
-    --bg-muted:    #f1f0f8;
-    --border:      #e4e2f0;
-    --text:        #0f0e17;
-    --text-muted:  #6b6880;
-    --accent:      #7c3aed;
-    --accent-light:#ede9fe;
+    --bg-muted:    #f3f3f9;
+    --border:      #e6e6f0;
+
+    /* Ink */
+    --text:        #0b0b14;
+    --text-muted:  #68687c;
+
+    /* Brand — indigo -> violet -> pink */
+    --accent:       #6d5ef5;
+    --accent-2:     #a855f7;
+    --accent-3:     #ec4899;
+    --accent-light: #eeecff;
+
+    --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 55%, var(--accent-3) 100%);
+    --accent-glow: color-mix(in srgb, var(--accent) 45%, transparent);
+
+    --shadow-sm: 0 1px 2px rgba(15,15,30,0.04);
+    --shadow-md: 0 4px 16px -4px rgba(15,15,30,0.08), 0 1px 2px rgba(15,15,30,0.04);
+    --shadow-lg: 0 20px 48px -16px rgba(15,15,30,0.16), 0 2px 6px rgba(15,15,30,0.05);
   }
+
   .dark {
-    --bg:          #0d0d14;
-    --bg-card:     #16161f;
-    --bg-muted:    #1e1e2a;
-    --border:      #2a2a38;
-    --text:        #f4f3ff;
-    --text-muted:  #9391a8;
-    --accent:      #8b5cf6;
-    --accent-light:#2e1a5e;
+    --bg:          #07070c;
+    --bg-card:     #111116;
+    --bg-muted:    #18181f;
+    --border:      #26262f;
+
+    --text:        #f6f6fb;
+    --text-muted:  #8e8ea3;
+
+    --accent:       #8d7dff;
+    --accent-2:     #c084fc;
+    --accent-3:     #f472b6;
+    --accent-light: #201c3d;
+
+    --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 55%, var(--accent-3) 100%);
+    --accent-glow: color-mix(in srgb, var(--accent) 55%, transparent);
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 20px -4px rgba(0,0,0,0.5);
+    --shadow-lg: 0 24px 60px -20px rgba(0,0,0,0.65);
   }
 
   * { box-sizing: border-box; }
 
   html {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
       Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
@@ -53,27 +79,71 @@
   .border-accent { border-color: var(--accent); }
   .ring-accent { --tw-ring-color: var(--accent); }
 
+  /* Gradient text + surfaces */
+  .text-gradient {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-gradient-brand { background: var(--accent-gradient); }
+
+  /* Soft aurora mesh — for hero / section backgrounds */
+  .mesh-bg {
+    position: relative;
+    isolation: isolate;
+  }
+  .mesh-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      radial-gradient(ellipse 900px 560px at 8% -10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+      radial-gradient(ellipse 700px 520px at 100% 4%, color-mix(in srgb, var(--accent-3) 16%, transparent), transparent 60%),
+      radial-gradient(ellipse 900px 640px at 46% 115%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 60%);
+  }
+
   .card {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 1rem;
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-elevated {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-glass {
+    background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius: 1.5rem;
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: var(--shadow-lg);
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold
-           text-white transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-    background-color: var(--accent);
+           text-white transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed;
+    background: var(--accent-gradient);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.06), 0 10px 24px -10px var(--accent-glow);
   }
-  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 1px 1px rgba(0,0,0,0.06), 0 14px 30px -10px var(--accent-glow); }
+  .btn-primary:active { transform: translateY(0); }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold
            transition-all duration-150 active:scale-95;
     color: var(--text);
     border: 1px solid var(--border);
-    background-color: transparent;
+    background-color: var(--bg-card);
   }
-  .btn-ghost:hover { background-color: var(--bg-muted); }
+  .btn-ghost:hover { background-color: var(--bg-muted); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 
   .input-base {
     @apply w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-150;
@@ -82,9 +152,15 @@
     color: var(--text);
   }
   .input-base::placeholder { color: var(--text-muted); }
-  .input-base:focus { border-color: var(--accent); }
+  .input-base:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
 
   /* hide scrollbar but keep scroll */
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes floatSlow {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(0,-16px,0) scale(1.03); }
+  }
+  .animate-float { animation: floatSlow 8s ease-in-out infinite; }
 }

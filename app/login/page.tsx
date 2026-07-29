@@ -35,12 +35,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-page flex flex-col">
+    <div className="min-h-dvh bg-page mesh-bg flex flex-col">
       {/* Nav */}
       <header className="flex items-center justify-between px-5 py-4 max-w-md mx-auto w-full">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-            <Zap size={16} className="text-white" />
+        <Link href="/" className="flex items-center gap-2 font-extrabold text-lg">
+          <span className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shadow-sm">
+            <Zap size={16} className="text-white" fill="white" />
           </span>
           <span style={{ color: "var(--text)" }}>BookMe</span>
         </Link>
@@ -49,11 +49,11 @@ export default function LoginPage() {
 
       {/* Card */}
       <main className="flex-1 flex items-center justify-center px-5 py-10">
-        <div className="card w-full max-w-sm p-8 animate-slide-up">
+        <div className="card-glass w-full max-w-sm p-8 animate-slide-up">
           {sent ? (
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--accent-light)] flex items-center justify-center mx-auto mb-4">
-                <CheckCircle size={28} style={{ color: "var(--accent)" }} />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center mx-auto mb-4 shadow-md">
+                <CheckCircle size={28} className="text-white" />
               </div>
               <h1 className="text-xl font-bold mb-2" style={{ color: "var(--text)" }}>
                 Check your inbox
@@ -76,10 +76,10 @@ export default function LoginPage() {
           ) : (
             <>
               <div className="mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-[var(--accent-light)] flex items-center justify-center mb-4">
-                  <Mail size={22} style={{ color: "var(--accent)" }} />
+                <div className="w-12 h-12 rounded-2xl bg-gradient-brand flex items-center justify-center mb-4 shadow-md">
+                  <Mail size={22} className="text-white" />
                 </div>
-                <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>
+                <h1 className="text-2xl font-black mb-1 tracking-tight" style={{ color: "var(--text)" }}>
                   Sign in to BookMe
                 </h1>
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>

@@ -58,8 +58,8 @@ export function DashboardClient({ user, profile, services, availability, request
       <header className="sticky top-0 z-20 border-b border-base bg-page/90 backdrop-blur-md">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold">
-            <span className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <Zap size={14} className="text-white" />
+            <span className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center shadow-sm">
+              <Zap size={14} className="text-white" fill="white" />
             </span>
             <span className="text-sm font-black" style={{ color: "var(--text)" }}>BookMe</span>
           </div>
@@ -88,7 +88,7 @@ export function DashboardClient({ user, profile, services, availability, request
 
       <div className="max-w-lg mx-auto w-full px-4 py-6 flex-1 flex flex-col gap-5">
         {/* ── Profile summary card ── */}
-        <div className="card p-4 flex items-center gap-3">
+        <div className="card-elevated p-4 flex items-center gap-3">
           {profile?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -99,7 +99,7 @@ export function DashboardClient({ user, profile, services, availability, request
           ) : (
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,var(--accent),#c084fc)", color: "white" }}
+              style={{ background: "var(--accent-gradient)", color: "white" }}
             >
               {(profile?.name ?? user.email ?? "?")[0].toUpperCase()}
             </div>
@@ -147,7 +147,7 @@ export function DashboardClient({ user, profile, services, availability, request
               className="relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all duration-150"
               style={
                 tab === t.id
-                  ? { background: "var(--bg-card)", color: "var(--text)", boxShadow: "0 1px 4px rgba(0,0,0,.12)" }
+                  ? { background: "var(--bg-card)", color: "var(--text)", boxShadow: "var(--shadow-sm)" }
                   : { color: "var(--text-muted)" }
               }
             >
@@ -156,7 +156,7 @@ export function DashboardClient({ user, profile, services, availability, request
               {t.badge && t.badge > 0 ? (
                 <span
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-black flex items-center justify-center text-white"
-                  style={{ background: "var(--accent)" }}
+                  style={{ background: "var(--accent-gradient)" }}
                 >
                   {t.badge}
                 </span>

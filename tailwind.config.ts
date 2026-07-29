@@ -11,16 +11,16 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50:  "#f5f3ff",
-          100: "#ede9fe",
-          200: "#ddd6fe",
-          300: "#c4b5fd",
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed",
-          700: "#6d28d9",
-          800: "#5b21b6",
-          900: "#4c1d95",
+          50:  "#f4f2ff",
+          100: "#eae6ff",
+          200: "#d6cdff",
+          300: "#b7a5ff",
+          400: "#9575fa",
+          500: "#6d5ef5",
+          600: "#5a3fe0",
+          700: "#4a2fc2",
+          800: "#3d279c",
+          900: "#33227d",
         },
       },
       fontFamily: {
@@ -29,6 +29,7 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.3s ease-in-out",
         "slide-up": "slideUp 0.3s ease-out",
+        "float": "float 8s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -38,6 +39,10 @@ const config: Config = {
         slideUp: {
           "0%": { transform: "translateY(12px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        float: {
+          "0%, 100%": { transform: "translate3d(0,0,0)" },
+          "50%": { transform: "translate3d(0,-14px,0)" },
         },
       },
     },

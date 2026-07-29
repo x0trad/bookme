@@ -55,7 +55,7 @@ export function BookingForm({ freelancerId, service, date, startTime, durationHo
       >
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: "linear-gradient(135deg, var(--accent), #c084fc)" }}
+          style={{ background: "var(--accent-gradient)" }}
         >
           <CheckCircle2 size={32} className="text-white" />
         </div>
@@ -81,7 +81,7 @@ export function BookingForm({ freelancerId, service, date, startTime, durationHo
       {/* Header */}
       <div
         className="px-5 py-4 flex items-center justify-between"
-        style={{ background: "linear-gradient(135deg, var(--accent), #c084fc)" }}
+        style={{ background: "var(--accent-gradient)" }}
       >
         <div>
           <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.75)" }}>Booking Summary</p>
@@ -161,7 +161,7 @@ export function BookingForm({ freelancerId, service, date, startTime, durationHo
           type="submit"
           disabled={pending || !name.trim() || !email.trim()}
           className="w-full py-4 rounded-2xl font-black text-base text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, var(--accent), #c084fc)" }}
+          style={{ background: "var(--accent-gradient)" }}
         >
           {pending ? (
             <>

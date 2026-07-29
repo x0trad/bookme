@@ -86,8 +86,8 @@ export function PublicProfileClient({ profile, services, availability, reviews, 
       <header className="sticky top-0 z-30 border-b border-base bg-page/80 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <Zap size={13} className="text-white" />
+            <span className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center shadow-sm">
+              <Zap size={13} className="text-white" fill="white" />
             </span>
             <span className="text-sm font-black" style={{ color: "var(--text)" }}>BookMe</span>
           </Link>
@@ -102,7 +102,7 @@ export function PublicProfileClient({ profile, services, availability, reviews, 
           {/* Gradient banner */}
           <div
             className="h-24 w-full"
-            style={{ background: "linear-gradient(135deg, var(--accent) 0%, #c084fc 50%, #60a5fa 100%)" }}
+            style={{ background: "var(--accent-gradient)" }}
           />
           {/* Content */}
           <div className="px-5 pb-5" style={{ background: "var(--bg-card)" }}>
@@ -120,7 +120,7 @@ export function PublicProfileClient({ profile, services, availability, reviews, 
                 <div
                   className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black"
                   style={{
-                    background: "linear-gradient(135deg,var(--accent),#c084fc)",
+                    background: "var(--accent-gradient)",
                     color: "white",
                     boxShadow: "0 0 0 4px var(--bg-card)",
                   }}
@@ -402,7 +402,7 @@ export function PublicProfileClient({ profile, services, availability, reviews, 
             <button
               onClick={() => setShowBookingForm(true)}
               className="w-full py-4 rounded-2xl font-black text-base flex items-center justify-between px-6 text-white transition-all active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, var(--accent), #c084fc)" }}
+              style={{ background: "var(--accent-gradient)", boxShadow: "0 12px 32px -10px var(--accent-glow)" }}
             >
               <div className="text-left">
                 <div className="text-sm font-bold opacity-80">
