@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendNewBookingEmail } from "@/lib/email";
+import { sendNewBookingEmail, sendBookingReceivedEmail } from "@/lib/email";
 
 export async function submitBookingRequest(data: {
   freelancerId: string;
@@ -36,19 +36,27 @@ export async function submitBookingRequest(data: {
     }
   }
 
-  const { error } = await supabase.from("booking_requests").insert({
-    freelancer_id: data.freelancerId,
-    service_id: data.serviceId,
-    client_name: data.clientName,
-    client_email: data.clientEmail,
-    client_message: data.clientMessage || null,
-    booking_date: data.bookingDate,
-    start_time: data.startTime,
-    duration_hours: data.durationHours,
-    status: "pending",
+  // Insert via RPC so a secret manage token is created atomically
+  const { data: created, error } = await supabase.rpc("create_booking_request", {
+    p_freelancer_id: data.freelancerId,
+    p_service_id: data.serviceId,
+    p_client_name: data.clientName,
+    p_client_email: data.clientEmail,
+    p_client_message: data.clientMessage || "",
+    p_booking_date: data.bookingDate,
+    p_start_time: data.startTime,
+    p_duration_hours: data.durationHours,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message.includes("SLOT_TAKEN")) {
+      return { error: "Those hours are no longer available. Please choose a different time." };
+    }
+    return { error: error.message };
+  }
+
+  const manageToken: string | null =
+    Array.isArray(created) && created[0]?.manage_token ? created[0].manage_token : null;
 
   // Email the freelancer about the new request
   try {
@@ -79,6 +87,23 @@ export async function submitBookingRequest(data: {
         startTime: data.startTime,
         durationHours: data.durationHours,
         serviceTitle,
+      });
+    }
+
+    // Confirmation to the client with their manage link
+    if (manageToken) {
+      await sendBookingReceivedEmail({
+        clientEmail: data.clientEmail,
+        clientName: data.clientName,
+        freelancerName:
+          (freelancerProfile?.name as string | null) ??
+          (freelancerProfile?.username as string) ??
+          "your freelancer",
+        bookingDate: data.bookingDate,
+        startTime: data.startTime,
+        durationHours: data.durationHours,
+        serviceTitle,
+        manageToken,
       });
     }
   } catch {

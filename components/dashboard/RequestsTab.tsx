@@ -6,13 +6,14 @@ import { Clock, CheckCircle2, XCircle, Inbox, Calendar, Mail, MessageSquare } fr
 import { formatTime } from "@/lib/utils";
 
 const STATUS_STYLES = {
-  pending:  { bg: "bg-yellow-500/10", text: "text-yellow-500",  label: "Pending"  },
-  approved: { bg: "bg-green-500/10",  text: "text-green-500",   label: "Approved" },
-  rejected: { bg: "bg-red-500/10",    text: "text-red-500",     label: "Rejected" },
+  pending:   { bg: "bg-yellow-500/10", text: "text-yellow-500",  label: "Pending"   },
+  approved:  { bg: "bg-green-500/10",  text: "text-green-500",   label: "Approved"  },
+  rejected:  { bg: "bg-red-500/10",    text: "text-red-500",     label: "Rejected"  },
+  cancelled: { bg: "bg-gray-500/10",   text: "text-gray-400",    label: "Cancelled" },
 };
 
 export function RequestsTab({ requests }: { requests: BookingRequest[] }) {
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected" | "cancelled">("pending");
   const [pending, startTransition] = useTransition();
 
   const filtered = filter === "all" ? requests : requests.filter((r) => r.status === filter);
@@ -21,6 +22,7 @@ export function RequestsTab({ requests }: { requests: BookingRequest[] }) {
     pending: requests.filter((r) => r.status === "pending").length,
     approved: requests.filter((r) => r.status === "approved").length,
     rejected: requests.filter((r) => r.status === "rejected").length,
+    cancelled: requests.filter((r) => r.status === "cancelled").length,
   };
 
   function handleStatus(id: string, status: "approved" | "rejected") {
@@ -33,7 +35,7 @@ export function RequestsTab({ requests }: { requests: BookingRequest[] }) {
     <div className="flex flex-col gap-4">
       {/* Filter pills */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {(["pending", "all", "approved", "rejected"] as const).map((f) => (
+        {(["pending", "all", "approved", "rejected", "cancelled"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}

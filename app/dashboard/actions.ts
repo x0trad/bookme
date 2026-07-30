@@ -168,6 +168,11 @@ export async function updateBookingStatus(
       const freelancerUsername = profile.username as string;
 
       if (status === "approved") {
+        // Fetch the client's manage token so the email can include it
+        const { data: manageToken } = await supabase.rpc("get_manage_token", {
+          p_booking_id: bookingId,
+        });
+
         await sendBookingApprovedEmail({
           clientEmail: booking.client_email as string,
           clientName: booking.client_name as string,
@@ -177,6 +182,7 @@ export async function updateBookingStatus(
           startTime: booking.start_time as string,
           durationHours: booking.duration_hours as number,
           serviceTitle,
+          manageToken: (manageToken as string | null) ?? null,
         });
       } else {
         await sendBookingRejectedEmail({

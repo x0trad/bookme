@@ -28,7 +28,25 @@ export interface ServiceOffering {
   created_at: string;
 }
 
-export type BookingStatus = "pending" | "approved" | "rejected";
+export type BookingStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+/** Shape returned by the get_booking_by_token RPC */
+export interface ManagedBooking {
+  id: string;
+  status: BookingStatus;
+  booking_date: string;
+  start_time: string;
+  duration_hours: number;
+  client_name: string;
+  client_email: string;
+  client_message: string | null;
+  freelancer_id: string;
+  freelancer_name: string | null;
+  freelancer_username: string | null;
+  freelancer_avatar: string | null;
+  service_title: string | null;
+  service_price: number | null;
+}
 
 export interface BookingRequest {
   id: string;
